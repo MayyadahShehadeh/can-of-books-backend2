@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const axios = require('axios');
 const app = express();
 app.use(cors());
+app.use(express.json());
 
 const PORT = process.env.PORT;
 const mongoLink = process.env.MONGO_LINK;
@@ -59,16 +60,60 @@ app.get('/test', (request, response) => {
 
 // http://localhost:3000/book?personEmail=miss.mayadah5gmsil.com
 app.get('/book', getBooksHandler);
+app.post('/addBook', addBookHandler);
+app.delete('/deleteBook/:bookId', deleteBook);
 
-function getBooksHandler (req,res){
+
+function getBooksHandler(req, res) {
   let personEmail = req.query.userEmail;
 
   bookModel.find({ userEmail: personEmail }).then(data => {
     console.log(data);
     res.send(data)
-  
+
   })
-  
+
 
 }
+
+async function addBookHandler(req, res) {
+  console.log(req.body);
+
+  let { userEmail, bookName, bookDescription } = req.body;
+
+  const newBook = new bookModel({
+    userEmail: userEmail,
+    bookName: bookName,
+    description: bookDescription
+  })
+  await newBook.save();
+
+  bookModel.find({ userEmail: userEmail }).then(data => {
+    console.log(data);
+    res.send(data)
+
+  })
+}
+
+function deleteBook(req, res) {
+  console.log(req.params);
+  let bookID = req.params.bookId;
+  let userEmail = req.query.userEmail;
+
+  bookModel.findOneAndDelete({ _id: bookID }).then(()=>{
+
+    bookModel.find({ userEmail }).then(data =>{
+      console.log(data);
+      res.send(data)
+    })
+    
+  }
+
+
+  
+    
+  )
+
+}
+
 app.listen(PORT, () => console.log(`listening on ${PORT}`));
